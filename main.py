@@ -47,8 +47,13 @@ def edit_file(params) -> str:
         return f"Error editing file '{file_name}': {str(e)}"
 
 def log_message(message):
-    with open("session_memory.jsonl", "a", encoding="utf-8") as f:
-        f.write(json.dumps(message) + "\n")
+    try:
+        if hasattr(message, "dict"):  # handle OpenAI object
+            message = message.dict()
+        with open("session_memory.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(message) + "\n")
+    except Exception as e:
+        print("⚠️ Failed to log message:", e)
 
 
 system_prompt = """
@@ -182,7 +187,8 @@ while True:
 
         parsed_response = json.loads(response.choices[0].message.content)
         messages.append(response.choices[0].message)
-        log_message(response.choices[0].message)
+        log_message(response.choices[0].message.dict())
+
 
         if parsed_response["step"] == "output":
             print(parsed_response["content"])
